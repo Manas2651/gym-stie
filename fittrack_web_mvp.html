@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrack MVP Web Preview</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            bgDark: '#0A0A0F',
+            cardDark: 'rgba(255, 255, 255, 0.04)',
+            borderDark: 'rgba(255, 255, 255, 0.08)',
+            primary: '#7C3AED',
+            accent: '#A78BFA',
+            calorie: '#22D3EE',
+            protein: '#34D399',
+            carbs: '#FBBF24',
+            fat: '#F87171',
+            workout: '#F97316',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #050508;
+      color: #F9FAFB;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    /* Glassmorphism scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    /* Custom simple styling for animations */
+    .tab-transition {
+      transition: all 0.3s ease-in-out;
+    }
+    .blur-glass {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-0 sm:p-4 md:p-8 bg-neutral-950 font-sans">
+
+  <!-- Main Container imitating a mobile viewport on desktop, and responsive full-screen on mobile -->
+  <div class="relative w-full max-w-md h-[840px] bg-bgDark rounded-none sm:rounded-[40px] border-0 sm:border-8 border-neutral-800 shadow-2xl flex flex-col overflow-hidden">
+    
+    <!-- Phone Top Status Bar Mock -->
+    <div class="hidden sm:flex justify-between items-center px-6 pt-3 pb-2 bg-bgDark text-neutral-400 text-xs font-semibold select-none z-50">
+      <span>12:54</span>
+      <div class="w-24 h-4 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-3"></div>
+      <div class="flex items-center space-x-2">
+        <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+        <i data-lucide="battery" class="w-4 h-4"></i>
+      </div>
+    </div>
+
+    <!-- Header bar -->
+    <header class="flex justify-between items-center px-6 py-4 bg-bgDark/80 border-b border-borderDark blur-glass z-40">
+      <div>
+        <h1 id="app-title" class="text-xl font-bold font-outfit tracking-wide text-white">FitTrack</h1>
+        <div id="sub-header-status" class="flex items-center space-x-2 mt-0.5">
+          <span id="tier-badge" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-neutral-700 text-white uppercase tracking-wider">Free</span>
+          <div id="streak-indicator" class="flex items-center space-x-1 text-workout text-xs font-semibold">
+            <i data-lucide="flame" class="w-3.5 h-3.5 fill-workout"></i>
+            <span>12d Streak</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <!-- Quick Upgrade button -->
+        <button onclick="switchTab('profile')" class="flex items-center space-x-1 bg-primary/20 hover:bg-primary/30 border border-primary/30 px-3 py-1 rounded-full text-xs font-bold text-accent transition">
+          <i data-lucide="sparkles" class="w-3 h-3 text-accent"></i>
+          <span>Plans</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Screens Content Area -->
+    <main class="flex-1 overflow-y-auto pb-24 relative" id="screen-container">
+      
+      <!-- ==================== HOME SCREEN ==================== -->
+      <section id="screen-home" class="screen-content p-6 space-y-6">
+        <!-- Date Greeting -->
+        <div>
+          <h2 class="text-2xl font-bold text-white font-outfit">Welcome back, Athlete!</h2>
+          <p class="text-xs text-neutral-400 mt-1" id="current-date-str">Monday, July 6</p>
+        </div>
+
+        <!-- Calorie Ring / Arc Card -->
+        <div class="flex flex-col items-center justify-center p-6 bg-cardDark rounded-3xl border border-borderDark relative overflow-hidden">
+          <div class="absolute -top-12 -left-12 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-calorie/10 rounded-full blur-3xl"></div>
+          
+          <!-- SVG Progress Ring -->
+          <div class="relative w-48 h-48 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90">
+              <circle cx="96" cy="96" r="80" stroke="rgba(255,255,255,0.03)" stroke-width="8" fill="transparent" />
+              <circle id="calorie-progress-circle" cx="96" cy="96" r="80" stroke="url(#primaryGrad)" stroke-width="8" fill="transparent" 
+                stroke-dasharray="502" stroke-dashoffset="250" stroke-linecap="round" class="transition-all duration-500" />
+              <defs>
+                <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#7C3AED" />
+                  <stop offset="100%" stop-color="#22D3EE" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute text-center">
+              <span id="home-calories-consumed" class="text-3xl font-extrabold text-white font-outfit">1,340</span>
+              <p class="text-[10px] text-neutral-400 uppercase tracking-widest mt-0.5">/ <span id="home-calories-target">2,000</span> kcal</p>
+            </div>
+          </div>
+
+          <div class="w-full grid grid-cols-3 gap-3 mt-6 pt-4 border-t border-borderDark">
+            <div class="text-center">
+              <p class="text-[10px] text-neutral-400">Protein</p>
+              <p class="text-sm font-semibold text-protein mt-0.5"><span id="home-protein-val">97</span>g</p>
+            </div>
+            <div class="text-center border-x border-borderDark">
+              <p class="text-[10px] text-neutral-400">Carbs</p>
+              <p class="text-sm font-semibold text-carbs mt-0.5"><span id="home-carbs-val">130</span>g</p>
+            </div>
+            <div class="text-center">
+              <p class="text-[10px] text-neutral-400">Fats</p>
+              <p class="text-sm font-semibold text-fat mt-0.5"><span id="home-fat-val">42</span>g</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats Cards Row -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-cardDark p-4 rounded-2xl border border-borderDark flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-workout/10 flex items-center justify-center text-workout">
+              <i data-lucide="dumbbell" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="text-[10px] text-neutral-400">Today's Workout</p>
+              <p id="home-workout-name" class="text-xs font-semibold text-white mt-0.5">Push Day</p>
+            </div>
+          </div>
+          
+          <div class="bg-cardDark p-4 rounded-2xl border border-borderDark flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-calorie/10 flex items-center justify-center text-calorie">
+              <i data-lucide="droplet" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="text-[10px] text-neutral-400">Water Tracker</p>
+              <div class="flex items-center space-x-1.5 mt-0.5">
+                <span id="home-water-val" class="text-xs font-semibold text-white">1.8</span>
+                <span class="text-[9px] text-neutral-400">/ 2.5L</span>
+                <button onclick="addWater(0.25)" class="p-0.5 bg-calorie/20 hover:bg-calorie/30 rounded text-calorie transition">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Training Info Card -->
+        <div class="bg-cardDark p-5 rounded-3xl border border-borderDark relative overflow-hidden flex justify-between items-center group cursor-pointer" onclick="switchTab('train')">
+          <div class="space-y-1">
+            <p class="text-[10px] uppercase tracking-wider text-primary font-bold">Current Training Split</p>
+            <h3 id="home-split-title" class="text-base font-bold text-white font-outfit">Push Pull Legs (PPL)</h3>
+            <p id="home-split-desc" class="text-xs text-neutral-400">Today's Target: Push Day (Chest, Shoulders & Triceps)</p>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-neutral-900 border border-borderDark flex items-center justify-center text-neutral-400 group-hover:text-white transition">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- Preplanned Nutrition Banner -->
+        <div id="home-plan-banner" class="bg-cardDark p-5 rounded-3xl border border-borderDark flex justify-between items-center cursor-pointer" onclick="switchTab('nutrition')">
+          <div class="space-y-1">
+            <p class="text-[10px] uppercase tracking-wider text-calorie font-bold">Predefined Meal Plan</p>
+            <h3 id="home-plan-title" class="text-base font-bold text-white font-outfit">High Protein Shred</h3>
+            <p class="text-xs text-neutral-400">All meals configured for fat loss and muscle maintenance.</p>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-neutral-900 border border-borderDark flex items-center justify-center text-neutral-400">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TRAIN SCREEN ==================== -->
+      <section id="screen-train" class="screen-content p-6 space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white font-outfit">Workout Logger</h2>
+            <p class="text-xs text-neutral-400 mt-1">Track your weights, sets, and progress</p>
+          </div>
+          <!-- Split Selection Trigger -->
+          <div class="relative">
+            <button onclick="toggleSplitSelector()" class="flex items-center space-x-2 bg-cardDark border border-borderDark px-4 py-2 rounded-xl text-xs text-white hover:bg-neutral-900 transition">
+              <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+              <span id="active-split-btn-label">PPL Split</span>
+            </button>
+            
+            <!-- Split Selector Dropdown -->
+            <div id="split-dropdown" class="absolute right-0 mt-2 w-56 bg-neutral-900 border border-borderDark rounded-2xl p-2 hidden z-50 shadow-2xl">
+              <p class="text-[9px] uppercase tracking-wider text-neutral-500 font-bold px-3 py-1">Select Training Split</p>
+              <button onclick="selectSplit('ppl')" class="w-full text-left px-3 py-2 hover:bg-neutral-800 text-xs rounded-xl flex items-center justify-between text-white">
+                <span>Push Pull Legs (PPL)</span>
+                <span class="text-[10px] text-neutral-400 font-medium">Free</span>
+              </button>
+              <button onclick="selectSplit('upperlower')" class="w-full text-left px-3 py-2 hover:bg-neutral-800 text-xs rounded-xl flex items-center justify-between text-white relative">
+                <span>Upper / Lower Body</span>
+                <span id="badge-split-ul" class="text-[9px] px-1.5 py-0.5 rounded bg-primary/20 text-accent font-bold">Pro</span>
+              </button>
+              <button onclick="selectSplit('arnold')" class="w-full text-left px-3 py-2 hover:bg-neutral-800 text-xs rounded-xl flex items-center justify-between text-white relative">
+                <span>Arnold Classic Split</span>
+                <span id="badge-split-arnold" class="text-[9px] px-1.5 py-0.5 rounded bg-primary/20 text-accent font-bold">Pro</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workout Header details -->
+        <div class="bg-cardDark p-5 rounded-3xl border border-borderDark space-y-3 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[9px] font-bold text-accent uppercase tracking-wider bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">Current Split</span>
+              <h3 id="current-workout-day" class="text-lg font-bold text-white font-outfit mt-1.5">Push Day (Chest/Shoulders/Triceps)</h3>
+            </div>
+            <button onclick="resetWorkout()" class="text-neutral-400 hover:text-red-400 transition p-1" title="Clear Workout">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="flex justify-between items-center text-xs text-neutral-400 pt-2 border-t border-borderDark/40">
+            <span>Exercises: <strong id="workout-ex-count" class="text-white">4</strong></span>
+            <span>Est. Duration: <strong class="text-white">55 min</strong></span>
+          </div>
+        </div>
+
+        <!-- Exercises List -->
+        <div id="exercises-container" class="space-y-4">
+          <!-- Exercise Item JS populated -->
+        </div>
+
+        <!-- Add Exercise Button -->
+        <button onclick="addNewCustomExercise()" class="w-full flex items-center justify-center space-x-2 bg-neutral-900 border border-dashed border-borderDark py-3 rounded-2xl text-xs text-neutral-400 hover:text-white transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Add Custom Exercise</span>
+        </button>
+
+        <!-- Save Session -->
+        <button onclick="saveActiveWorkout()" class="w-full bg-primary hover:bg-primary/95 text-white font-bold py-4 rounded-2xl text-sm transition shadow-lg shadow-primary/20">
+          Save Session & Update PRs
+        </button>
+      </section>
+
+      <!-- ==================== NUTRITION SCREEN ==================== -->
+      <section id="screen-nutrition" class="screen-content p-6 space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white font-outfit">Nutrition & Meals</h2>
+            <p class="text-xs text-neutral-400 mt-1">Log foods, manage predefined nutritional plans</p>
+          </div>
+          <!-- Customizer Trigger -->
+          <div class="flex items-center space-x-2">
+            <div class="relative">
+              <button onclick="toggleCheatDay()" id="cheat-day-toggle-btn" class="w-10 h-10 rounded-xl bg-cardDark border border-borderDark flex items-center justify-center transition">
+                <i data-lucide="flame" class="w-5 h-5 text-neutral-400"></i>
+              </button>
+              <!-- Elite lock badge for Cheat Day -->
+              <span id="cheat-day-lock" class="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5 text-black border-2 border-bgDark">
+                <i data-lucide="lock" class="w-2 h-2"></i>
+              </span>
+            </div>
+            
+            <div class="relative">
+              <button onclick="openMacroCustomizer()" class="w-10 h-10 rounded-xl bg-cardDark border border-borderDark flex items-center justify-center hover:bg-neutral-900 transition">
+                <i data-lucide="sliders" class="w-4 h-4 text-white"></i>
+              </button>
+              <!-- Pro lock badge for macros customizer -->
+              <span id="macro-custom-lock" class="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 text-white border-2 border-bgDark">
+                <i data-lucide="lock" class="w-2 h-2"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cheat Day Indicator Banner (Hidden by default) -->
+        <div id="cheat-day-active-banner" class="bg-red-950/20 border border-red-500/30 p-4 rounded-2xl flex items-center space-x-3 text-red-400 hidden">
+          <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-red-500"></i>
+          <p class="text-xs"><strong>Cheat Day Mode Active!</strong> Macro boundaries are expanded and tracking is temporarily relaxed. Enjoy your meal!</p>
+        </div>
+
+        <!-- Target Nutrition Plans Slider -->
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-white font-outfit">Select Nutrition Plan</h3>
+            <span id="nutrition-plans-lock-badge" class="text-[9px] px-1.5 py-0.5 rounded bg-primary/20 text-accent font-bold">Pro Feature</span>
+          </div>
+          
+          <div class="flex space-x-4 overflow-x-auto pb-2 -mx-6 px-6" id="plans-card-container">
+            <!-- Plan Cards JS populated -->
+          </div>
+        </div>
+
+        <!-- Meal diary sections -->
+        <div class="space-y-4">
+          <h3 class="text-sm font-bold text-white font-outfit">Today's Meals</h3>
+          
+          <!-- Breakfast -->
+          <div class="bg-cardDark rounded-2xl border border-borderDark p-4 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🥣</span>
+                <span class="text-sm font-bold text-white">Breakfast</span>
+              </div>
+              <button onclick="showAddFoodModal('Breakfast')" class="text-xs text-accent font-semibold hover:text-white flex items-center space-x-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Food</span>
+              </button>
+            </div>
+            <div id="meal-list-breakfast" class="space-y-2 text-xs text-neutral-400">
+              <!-- Foods entries -->
+            </div>
+          </div>
+          
+          <!-- Lunch -->
+          <div class="bg-cardDark rounded-2xl border border-borderDark p-4 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🥗</span>
+                <span class="text-sm font-bold text-white">Lunch</span>
+              </div>
+              <button onclick="showAddFoodModal('Lunch')" class="text-xs text-accent font-semibold hover:text-white flex items-center space-x-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Food</span>
+              </button>
+            </div>
+            <div id="meal-list-lunch" class="space-y-2 text-xs text-neutral-400">
+              <!-- Foods entries -->
+            </div>
+          </div>
+          
+          <!-- Dinner -->
+          <div class="bg-cardDark rounded-2xl border border-borderDark p-4 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🥩</span>
+                <span class="text-sm font-bold text-white">Dinner</span>
+              </div>
+              <button onclick="showAddFoodModal('Dinner')" class="text-xs text-accent font-semibold hover:text-white flex items-center space-x-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Food</span>
+              </button>
+            </div>
+            <div id="meal-list-dinner" class="space-y-2 text-xs text-neutral-400">
+              <!-- Foods entries -->
+            </div>
+          </div>
+          
+          <!-- Snacks -->
+          <div class="bg-cardDark rounded-2xl border border-borderDark p-4 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🍎</span>
+                <span class="text-sm font-bold text-white">Snacks</span>
+              </div>
+              <button onclick="showAddFoodModal('Snacks')" class="text-xs text-accent font-semibold hover:text-white flex items-center space-x-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Food</span>
+              </button>
+            </div>
+            <div id="meal-list-snacks" class="space-y-2 text-xs text-neutral-400">
+              <!-- Foods entries -->
+            </div>
+          </div>
+
+        </div>
+        <div class="h-10"></div>
+      </section>
+
+      <!-- ==================== PROGRESS SCREEN ==================== -->
+      <section id="screen-progress" class="screen-content p-6 space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white font-outfit">Progress & Lifts</h2>
+            <p class="text-xs text-neutral-400 mt-1">Track growth, overload curves & leaderboard</p>
+          </div>
+        </div>
+
+        <!-- Custom tab switcher: Analytics vs Leaderboard -->
+        <div class="flex bg-neutral-900/50 p-1 border border-borderDark rounded-xl">
+          <button onclick="switchProgressSubTab('analytics')" id="subtab-btn-analytics" class="flex-1 text-center py-2 text-xs font-semibold rounded-lg bg-neutral-800 text-white">Analytics</button>
+          <button onclick="switchProgressSubTab('leaderboard')" id="subtab-btn-leaderboard" class="flex-1 text-center py-2 text-xs font-semibold rounded-lg text-neutral-400 flex items-center justify-center space-x-1 relative">
+            <span>Leaderboard</span>
+            <span id="leaderboard-lock-badge" class="text-[9px] bg-amber-500/20 text-amber-500 font-bold px-1 py-0.5 rounded">Elite</span>
+          </button>
+        </div>
+
+        <!-- SUB TAB: ANALYTICS -->
+        <div id="progress-subtab-analytics" class="space-y-6">
+          
+          <!-- PR List Card -->
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-white font-outfit">Personal Records (PRs)</h3>
+            <div class="grid grid-cols-3 gap-3" id="prs-grid-container">
+              <!-- PR cards JS populated -->
+            </div>
+          </div>
+
+          <!-- Growth Chart (Line Chart Visualization) -->
+          <div class="bg-cardDark border border-borderDark rounded-3xl p-5 space-y-4 relative">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-sm font-bold text-white font-outfit">Strength Curve</h3>
+                <p class="text-[10px] text-neutral-400 mt-0.5">Bench Press progress (1RM)</p>
+              </div>
+              <span id="charts-lock-badge" class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 font-bold">Elite Feature</span>
+            </div>
+
+            <!-- Gated Chart Preview -->
+            <div id="analytics-chart-container" class="w-full h-44 bg-neutral-950/40 rounded-2xl flex items-center justify-center relative overflow-hidden border border-borderDark/40">
+              <!-- Visual Line Chart Mock via Custom Canvas or SVG -->
+              <svg id="svg-chart" class="w-full h-full p-4 transition-all duration-300" viewBox="0 0 100 50" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(124, 92, 245, 0.4)"/>
+                    <stop offset="100%" stop-color="rgba(124, 92, 245, 0)"/>
+                  </linearGradient>
+                </defs>
+                <path d="M 0,45 Q 20,38 40,25 T 80,15 T 100,5" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"></path>
+                <path d="M 0,45 Q 20,38 40,25 T 80,15 T 100,5 L 100,50 L 0,50 Z" fill="url(#chartGrad)"></path>
+                <!-- Target line -->
+                <line x1="0" y1="20" x2="100" y2="20" stroke="rgba(255, 255, 255, 0.1)" stroke-dasharray="2,2"></line>
+              </svg>
+              
+              <!-- Lock Overlay for Free/Pro -->
+              <div id="chart-lock-overlay" class="absolute inset-0 bg-neutral-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-2 z-10 hidden">
+                <div class="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 mb-1">
+                  <i data-lucide="lock" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xs font-bold text-white">Strength Progression Curves</h4>
+                <p class="text-[10px] text-neutral-400 max-w-xs">Upgrade to Elite to unlock beautiful charts and progression analytics for all lifts.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progressive Overload Table -->
+          <div class="bg-cardDark border border-borderDark rounded-3xl p-5 space-y-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-sm font-bold text-white font-outfit font-semibold">Overload History</h3>
+                <p class="text-[10px] text-neutral-400 mt-0.5">Logs of active progressive overload indicators</p>
+              </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left text-neutral-400">
+                <thead class="text-[10px] uppercase text-neutral-500 border-b border-borderDark">
+                  <tr>
+                    <th scope="col" class="py-2">Exercise</th>
+                    <th scope="col" class="py-2">Prev Max</th>
+                    <th scope="col" class="py-2 text-white">Current Max</th>
+                    <th scope="col" class="py-2 text-right">Delta</th>
+                  </tr>
+                </thead>
+                <tbody id="overload-table-body">
+                  <!-- JS generated entries -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SUB TAB: LEADERBOARD -->
+        <div id="progress-subtab-leaderboard" class="space-y-6 hidden relative">
+          <!-- Gated Overlay for Leaderboard -->
+          <div id="leaderboard-lock-overlay" class="absolute inset-0 bg-neutral-950/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center space-y-3 z-10 h-[500px]">
+            <div class="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 mb-2 animate-pulse">
+              <i data-lucide="crown" class="w-7 h-7"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white font-outfit">FitTrack Elite Leaderboard</h4>
+            <p class="text-xs text-neutral-400 max-w-xs leading-relaxed">Upgrade to Elite (₹199) to compare your Bench/Squat/Deadlift 1RMs with users worldwide and rank among the best.</p>
+            <button onclick="switchTab('profile')" class="bg-amber-500 hover:bg-amber-600 text-black text-xs font-bold px-6 py-2.5 rounded-full transition shadow-lg shadow-amber-500/20">
+              Unlock Elite Tier (₹199)
+            </button>
+          </div>
+
+          <!-- Leaderboard content (will show if Elite) -->
+          <div class="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-amber-500/25 flex items-center justify-center text-amber-500 font-bold text-sm">#47</div>
+              <div>
+                <p class="text-[10px] text-neutral-400">Your Current Ranking</p>
+                <p class="text-xs font-bold text-white">Top 12% Lifters</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-neutral-400">Total Lifts Score</p>
+              <p class="text-sm font-bold text-amber-500 font-outfit">345 pts</p>
+            </div>
+          </div>
+
+          <div class="space-y-3" id="leaderboard-users-list">
+            <!-- Leaderboard items JS populated -->
+          </div>
+        </div>
+
+        <div class="h-10"></div>
+      </section>
+
+      <!-- ==================== PROFILE / TIERS SCREEN ==================== -->
+      <section id="screen-profile" class="screen-content p-6 space-y-6 hidden">
+        <div>
+          <h2 class="text-2xl font-bold text-white font-outfit">Profile & Subscriptions</h2>
+          <p class="text-xs text-neutral-400 mt-1">Configure profile and simulate subscription pricing tiers</p>
+        </div>
+
+        <!-- Profile details -->
+        <div class="bg-cardDark border border-borderDark rounded-3xl p-5 flex items-center space-x-4">
+          <div class="w-14 h-14 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-white font-bold text-xl">
+            JD
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">John Doe</h3>
+            <p class="text-xs text-neutral-400">fittrack_user_992@gmail.com</p>
+            <div class="flex items-center space-x-2 mt-2">
+              <span id="profile-tier-badge" class="px-2 py-0.5 text-[9px] font-bold rounded-full bg-neutral-700 text-white uppercase tracking-wider">Free User</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Subscription Tiers Cards -->
+        <div class="space-y-4">
+          <h3 class="text-sm font-bold text-white font-outfit">Choose Plan Tier</h3>
+          
+          <!-- Free Tier -->
+          <div onclick="selectSubscription('free')" id="tier-card-free" class="bg-cardDark border-2 border-neutral-700/60 rounded-3xl p-5 cursor-pointer hover:border-neutral-500 transition relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="text-sm font-bold text-white font-outfit">Free Tier</h4>
+                <p class="text-[10px] text-neutral-400 mt-0.5">Track macros & workout with bare-minimum experience</p>
+              </div>
+              <span class="text-sm font-bold text-white">₹0<span class="text-[9px] text-neutral-500">/mo</span></span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-4">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-neutral-500"></i>
+              <span>Basic workout and macro tracking</span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-2">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-neutral-500"></i>
+              <span>Simple overload text table</span>
+            </div>
+          </div>
+
+          <!-- Pro Tier (₹99/mo) -->
+          <div onclick="selectSubscription('pro')" id="tier-card-pro" class="bg-cardDark border border-borderDark rounded-3xl p-5 cursor-pointer hover:border-primary/50 transition relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
+            
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="text-sm font-bold text-white font-outfit flex items-center space-x-1.5">
+                  <span class="text-accent">Pro Plan</span>
+                  <span class="text-[9px] bg-primary/20 text-accent font-bold px-1.5 py-0.5 rounded">Popular</span>
+                </h4>
+                <p class="text-[10px] text-neutral-400 mt-0.5">Macro customizer & custom daily split planning</p>
+              </div>
+              <span class="text-sm font-bold text-accent">₹99<span class="text-[9px] text-neutral-400">/mo</span></span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-4">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i>
+              <span>Custom Training splits (auto loaded)</span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-2">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i>
+              <span>Predefined nutrition & meal plans</span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-2">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i>
+              <span>Full custom slider macro editor</span>
+            </div>
+          </div>
+
+          <!-- Elite Tier (₹199/mo) -->
+          <div onclick="selectSubscription('elite')" id="tier-card-elite" class="bg-cardDark border border-borderDark rounded-3xl p-5 cursor-pointer hover:border-amber-500/50 transition relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="text-sm font-bold text-white font-outfit flex items-center space-x-1.5">
+                  <span class="text-amber-500">Elite Plan</span>
+                  <span class="text-[9px] bg-amber-500/20 text-amber-500 font-bold px-1.5 py-0.5 rounded">All-access</span>
+                </h4>
+                <p class="text-[10px] text-neutral-400 mt-0.5">PR curves, cheat days & global leaderboard ranking</p>
+              </div>
+              <span class="text-sm font-bold text-amber-500">₹199<span class="text-[9px] text-neutral-400">/mo</span></span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-4">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Global Leaderboard & Lift Rankings</span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-2">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Advanced progression line/bar/area charts</span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] text-neutral-400 mt-2">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Cheat Day relaxations with UI alerts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation Note -->
+        <div class="bg-neutral-900 border border-borderDark/40 p-4 rounded-2xl text-[10px] text-neutral-400 leading-normal">
+          <strong>Note on Simulated Plan Upgrades:</strong> Upgrades and downgrades are simulated instantly. Features are gated or unlocked dynamically inside the UI as soon as you choose a plan tier from the selection cards above.
+        </div>
+        <div class="h-6"></div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="absolute bottom-0 inset-x-0 h-20 bg-bgDark/90 border-t border-borderDark flex justify-around items-center px-4 blur-glass z-40">
+      <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center justify-center w-12 h-12 text-primary">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold mt-1">Home</span>
+      </button>
+      
+      <button onclick="switchTab('train')" id="nav-btn-train" class="flex flex-col items-center justify-center w-12 h-12 text-neutral-400">
+        <i data-lucide="dumbbell" class="w-5 h-5"></i>
+        <span class="text-[9px] font-medium mt-1">Train</span>
+      </button>
+      
+      <button onclick="switchTab('nutrition')" id="nav-btn-nutrition" class="flex flex-col items-center justify-center w-12 h-12 text-neutral-400">
+        <i data-lucide="utensils" class="w-5 h-5"></i>
+        <span class="text-[9px] font-medium mt-1">Eat</span>
+      </button>
+      
+      <button onclick="switchTab('progress')" id="nav-btn-progress" class="flex flex-col items-center justify-center w-12 h-12 text-neutral-400">
+        <i data-lucide="trending-up" class="w-5 h-5"></i>
+        <span class="text-[9px] font-medium mt-1">Progress</span>
+      </button>
+      
+      <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center justify-center w-12 h-12 text-neutral-400">
+        <i data-lucide="user" class="w-5 h-5"></i>
+        <span class="text-[9px] font-medium mt-1">Profile</span>
+      </button>
+    </nav>
+
+    <!-- MACRO CUSTOMIZER MODAL -->
+    <div id="macro-customizer-modal" class="absolute inset-0 bg-black/80 z-50 flex items-end hidden blur-glass">
+      <div class="w-full bg-bgDark border-t border-borderDark rounded-t-[30px] p-6 space-y-6 max-h-[85%] overflow-y-auto">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-bold text-white font-outfit">Customize Daily Targets</h3>
+          <button onclick="closeMacroCustomizer()" class="w-8 h-8 rounded-full bg-neutral-900 flex items-center justify-center text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Sliders -->
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-neutral-400">Calories Target</span>
+              <span id="slider-val-calories" class="text-calorie">2,000 kcal</span>
+            </div>
+            <input type="range" id="range-calories" min="1200" max="4500" step="50" value="2000" oninput="updateSliderValue('calories', this.value)" class="w-full accent-calorie">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-neutral-400">Protein Target</span>
+              <span id="slider-val-protein" class="text-protein">150g</span>
+            </div>
+            <input type="range" id="range-protein" min="40" max="250" step="5" value="150" oninput="updateSliderValue('protein', this.value)" class="w-full accent-protein">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-neutral-400">Carbohydrates Target</span>
+              <span id="slider-val-carbs" class="text-carbs">220g</span>
+            </div>
+            <input type="range" id="range-carbs" min="50" max="500" step="10" value="220" oninput="updateSliderValue('carbs', this.value)" class="w-full accent-carbs">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-neutral-400">Fats Target</span>
+              <span id="slider-val-fat" class="text-fat">60g</span>
+            </div>
+            <input type="range" id="range-fat" min="20" max="150" step="5" value="60" oninput="updateSliderValue('fat', this.value)" class="w-full accent-fat">
+          </div>
+        </div>
+
+        <button onclick="saveCustomMacros()" class="w-full bg-primary py-3.5 rounded-2xl text-xs font-bold text-white transition">
+          Apply & Save Targets
+        </button>
+      </div>
+    </div>
+
+    <!-- ADD FOOD MODAL -->
+    <div id="add-food-modal" class="absolute inset-0 bg-black/80 z-50 flex items-end hidden blur-glass">
+      <div class="w-full bg-bgDark border-t border-borderDark rounded-t-[30px] p-6 space-y-4 max-h-[85%] overflow-y-auto">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-bold text-white font-outfit">Add Food to <span id="add-food-meal-name" class="text-primary">Breakfast</span></h3>
+          <button onclick="closeAddFoodModal()" class="w-8 h-8 rounded-full bg-neutral-900 flex items-center justify-center text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold block mb-1">Food Item Name</label>
+            <input type="text" id="food-input-name" placeholder="e.g. Scrambled Eggs (3x)" class="w-full bg-neutral-900 border border-borderDark p-3 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-primary">
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold block mb-1">Calories (kcal)</label>
+              <input type="number" id="food-input-calories" placeholder="e.g. 210" class="w-full bg-neutral-900 border border-borderDark p-3 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold block mb-1">Protein (g)</label>
+              <input type="number" id="food-input-protein" placeholder="e.g. 18" class="w-full bg-neutral-900 border border-borderDark p-3 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold block mb-1">Carbs (g)</label>
+              <input type="number" id="food-input-carbs" placeholder="e.g. 2" class="w-full bg-neutral-900 border border-borderDark p-3 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold block mb-1">Fat (g)</label>
+              <input type="number" id="food-input-fat" placeholder="e.g. 15" class="w-full bg-neutral-900 border border-borderDark p-3 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <button onclick="submitFoodEntry()" class="w-full bg-primary py-3.5 rounded-2xl text-xs font-bold text-white transition mt-3">
+          Add Food Item
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- State & Logic -->
+  <script>
+    // App State Configuration
+    const state = {
+      user: {
+        name: "John Doe",
+        email: "fittrack_user_992@gmail.com",
+        tier: "free", // "free" | "pro" | "elite"
+      },
+      currentTab: "home",
+      progressSubTab: "analytics",
+      
+      water: 1.8,
+      
+      // Targets Config
+      targets: {
+        calories: 2000,
+        protein: 150,
+        carbs: 220,
+        fat: 60
+      },
+      
+      // Active plan configuration (Pro Feature)
+      currentNutritionPlan: null, // plan object
+      isCheatDay: false,
+      
+      // Active split configuration (Pro Feature)
+      activeSplit: "ppl", // "ppl" | "upperlower" | "arnold"
+      
+      // Meals Log list
+      meals: {
+        Breakfast: [
+          { id: 1, name: "Oatmeal with Almonds", calories: 340, protein: 12, carbs: 55, fat: 8 },
+          { id: 2, name: "Whey Protein Shake", calories: 150, protein: 30, carbs: 3, fat: 1.5 }
+        ],
+        Lunch: [
+          { id: 3, name: "Grilled Chicken & Rice", calories: 480, protein: 42, carbs: 48, fat: 6 }
+        ],
+        Dinner: [
+          { id: 4, name: "Salmon Fillet & Broccoli", calories: 370, protein: 35, carbs: 12, fat: 19 }
+        ],
+        Snacks: []
+      },
+      
+      // Lifts Personal Records
+      prs: {
+        "Bench Press": { weight: 85, date: "2026-06-12" },
+        "Squat": { weight: 120, date: "2026-06-10" },
+        "Deadlift": { weight: 140, date: "2026-06-05" },
+        "Overhead Press": { weight: 55, date: "2026-06-08" }
+      },
+      
+      // Workout Day Logs (preloaded based on active splits)
+      workoutDay: {
+        dayLabel: "Push Day",
+        exercises: [
+          { name: "Bench Press", sets: [{ reps: 8, weight: 80 }, { reps: 8, weight: 80 }, { reps: 6, weight: 82.5 }], lastWeight: 80 },
+          { name: "Overhead Press", sets: [{ reps: 8, weight: 50 }, { reps: 8, weight: 50 }], lastWeight: 52.5 },
+          { name: "Incline DB Press", sets: [{ reps: 10, weight: 26 }, { reps: 10, weight: 26 }], lastWeight: 26 },
+          { name: "Tricep Pushdown", sets: [{ reps: 12, weight: 25 }, { reps: 12, weight: 25 }], lastWeight: 22.5 }
+        ]
+      }
+    };
+
+    // Predefined Splits templates
+    const SPLITS = {
+      ppl: {
+        name: "Push Pull Legs (PPL)",
+        dayLabel: "Push Day (Chest/Shoulders/Triceps)",
+        exercises: [
+          { name: "Bench Press", sets: [{ reps: 8, weight: 80 }, { reps: 8, weight: 80 }], lastWeight: 80 },
+          { name: "Overhead Press", sets: [{ reps: 8, weight: 50 }, { reps: 8, weight: 50 }], lastWeight: 52.5 },
+          { name: "Incline DB Press", sets: [{ reps: 10, weight: 26 }, { reps: 10, weight: 26 }], lastWeight: 26 },
+          { name: "Tricep Pushdown", sets: [{ reps: 12, weight: 25 }, { reps: 12, weight: 25 }], lastWeight: 22.5 }
+        ]
+      },
+      upperlower: {
+        name: "Upper / Lower Split",
+        dayLabel: "Upper Body Day (Power & Size)",
+        exercises: [
+          { name: "Weighted Pull Ups", sets: [{ reps: 6, weight: 10 }, { reps: 6, weight: 10 }], lastWeight: 7.5 },
+          { name: "Barbell Rows", sets: [{ reps: 8, weight: 70 }, { reps: 8, weight: 70 }], lastWeight: 67.5 },
+          { name: "Flat DB Bench", sets: [{ reps: 8, weight: 32 }, { reps: 8, weight: 32 }], lastWeight: 32 },
+          { name: "Lateral Raise", sets: [{ reps: 12, weight: 12 }, { reps: 12, weight: 12 }], lastWeight: 10 }
+        ]
+      },
+      arnold: {
+        name: "Arnold Classic Split",
+        dayLabel: "Chest & Back Day",
+        exercises: [
+          { name: "Incline Barbell Bench", sets: [{ reps: 8, weight: 75 }, { reps: 8, weight: 75 }], lastWeight: 72.5 },
+          { name: "Deadlift", sets: [{ reps: 5, weight: 130 }, { reps: 5, weight: 130 }], lastWeight: 130 },
+          { name: "Dumbbell Flys", sets: [{ reps: 12, weight: 16 }, { reps: 12, weight: 16 }], lastWeight: 14 },
+          { name: "Lat Pulldown", sets: [{ reps: 10, weight: 65 }, { reps: 10, weight: 65 }], lastWeight: 60 }
+        ]
+      }
+    };
+
+    // Predefined Nutrition Plans templates
+    const NUTRITION_PLANS = [
+      { id: "bulk", name: "Clean Bulking plan", goal: "bulk", calories: 3200, protein: 180, carbs: 420, fat: 85 },
+      { id: "cut", name: "High Protein Shred", goal: "cut", calories: 1600, protein: 160, carbs: 120, fat: 50 },
+      { id: "maintain", name: "Lean Maintenance Plan", goal: "maintain", calories: 2200, protein: 150, carbs: 240, fat: 65 }
+    ];
+
+    // Dummy Leaderboard Lift Lads
+    const LEADERBOARD_USERS = [
+      { id: "u1", username: "Vikram_Strength", initial: "VS", city: "Mumbai", totalScore: 540 },
+      { id: "u2", username: "RohanFits", initial: "RF", city: "Delhi", totalScore: 495 },
+      { id: "u3", username: "Pooja_LiftHeavy", initial: "PL", city: "Bangalore", totalScore: 450 },
+      { id: "user_current", username: "John Doe (You)", initial: "JD", city: "Pune", totalScore: 345 },
+      { id: "u5", username: "AniketWorkout", initial: "AW", city: "Kolkata", totalScore: 320 }
+    ];
+
+    // Active screen navigation logic
+    function switchTab(tabId) {
+      // Hide all section screens
+      document.querySelectorAll('.screen-content').forEach(screen => {
+        screen.classList.add('hidden');
+      });
+      
+      // Remove highlight colors on nav links
+      document.querySelectorAll('nav button').forEach(btn => {
+        btn.classList.remove('text-primary');
+        btn.classList.add('text-neutral-400');
+        btn.querySelector('span').classList.remove('font-bold');
+        btn.querySelector('span').classList.add('font-medium');
+      });
+
+      // Show requested section screen
+      document.getElementById(`screen-${tabId}`).classList.remove('hidden');
+      
+      // Highlight active nav tab button
+      const activeNavBtn = document.getElementById(`nav-btn-${tabId}`);
+      activeNavBtn.classList.remove('text-neutral-400');
+      activeNavBtn.classList.add('text-primary');
+      activeNavBtn.querySelector('span').classList.remove('font-medium');
+      activeNavBtn.querySelector('span').classList.add('font-bold');
+
+      state.currentTab = tabId;
+      
+      // Rerender tab contexts if required
+      if (tabId === 'home') renderHomeTab();
+      if (tabId === 'train') renderTrainTab();
+      if (tabId === 'nutrition') renderNutritionTab();
+      if (tabId === 'progress') renderProgressTab();
+      if (tabId === 'profile') renderProfileTab();
+    }
+
+    // Toggle split subtab in progress (analytics vs leaderboard)
+    function switchProgressSubTab(subTabId) {
+      if (subTabId === 'leaderboard' && state.user.tier !== 'elite') {
+        // Trigger elite gate
+        alert("Locked feature! Please upgrade to Elite to unlock the Leaderboard.");
+        switchTab('profile');
+        return;
+      }
+      
+      document.getElementById('progress-subtab-analytics').classList.add('hidden');
+      document.getElementById('progress-subtab-leaderboard').classList.add('hidden');
+      
+      document.getElementById('subtab-btn-analytics').className = "flex-1 text-center py-2 text-xs font-semibold rounded-lg text-neutral-400";
+      document.getElementById('subtab-btn-leaderboard').className = "flex-1 text-center py-2 text-xs font-semibold rounded-lg text-neutral-400 flex items-center justify-center space-x-1";
+
+      document.getElementById(`progress-subtab-${subTabId}`).classList.remove('hidden');
+      document.getElementById(`subtab-btn-${subTabId}`).className = "flex-1 text-center py-2 text-xs font-semibold rounded-lg bg-neutral-800 text-white flex items-center justify-center space-x-1";
+
+      state.progressSubTab = subTabId;
+    }
+
+    // Gating check utility
+    function canUserAccess(featureTier) {
+      const tiers = { free: 0, pro: 1, elite: 2 };
+      return tiers[state.user.tier] >= tiers[featureTier];
+    }
+
+    // Subscriptions change
+    function selectSubscription(tierId) {
+      state.user.tier = tierId;
+      
+      // Update UI displays dynamically
+      const badge = document.getElementById('tier-badge');
+      const profileBadge = document.getElementById('profile-tier-badge');
+      
+      const colors = { free: 'bg-neutral-700', pro: 'bg-primary', elite: 'bg-amber-500' };
+      const labels = { free: 'Free User', pro: 'Pro Member', elite: 'Elite Athlete' };
+      
+      badge.className = `px-2 py-0.5 text-[10px] font-bold rounded-full text-white uppercase tracking-wider ${colors[tierId]}`;
+      badge.textContent = tierId;
+      
+      profileBadge.className = `px-2 py-0.5 text-[9px] font-bold rounded-full text-white uppercase tracking-wider ${colors[tierId]}`;
+      profileBadge.textContent = labels[tierId];
+      
+      // Update active selection visual outlines
+      document.getElementById('tier-card-free').className = `bg-cardDark border ${tierId === 'free' ? 'border-neutral-500' : 'border-borderDark'} rounded-3xl p-5 cursor-pointer hover:border-neutral-500 transition relative overflow-hidden`;
+      document.getElementById('tier-card-pro').className = `bg-cardDark border ${tierId === 'pro' ? 'border-primary' : 'border-borderDark'} rounded-3xl p-5 cursor-pointer hover:border-primary/50 transition relative overflow-hidden`;
+      document.getElementById('tier-card-elite').className = `bg-cardDark border ${tierId === 'elite' ? 'border-amber-500' : 'border-borderDark'} rounded-3xl p-5 cursor-pointer hover:border-amber-500/50 transition relative overflow-hidden`;
+      
+      // Apply features changes restrictions instantly
+      applyGatingRestrictions();
+      
+      alert(`Plan switched successfully! Simulated tier updated to ${labels[tierId].toUpperCase()}`);
+    }
+
+    function applyGatingRestrictions() {
+      // 1. Splits configuration gates
+      const isPro = canUserAccess('pro');
+      const isElite = canUserAccess('elite');
+
+      // Pro features
+      document.getElementById('badge-split-ul').style.display = isPro ? 'none' : 'inline-block';
+      document.getElementById('badge-split-arnold').style.display = isPro ? 'none' : 'inline-block';
+      document.getElementById('nutrition-plans-lock-badge').style.display = isPro ? 'none' : 'inline-block';
+      document.getElementById('macro-custom-lock').style.display = isPro ? 'none' : 'block';
+
+      // Elite features
+      document.getElementById('cheat-day-lock').style.display = isElite ? 'none' : 'block';
+      document.getElementById('leaderboard-lock-badge').style.display = isElite ? 'none' : 'inline-block';
+      document.getElementById('charts-lock-badge').style.display = isElite ? 'none' : 'inline-block';
+      
+      // Leaderboard overlays toggle
+      if (isElite) {
+        document.getElementById('leaderboard-lock-overlay').classList.add('hidden');
+        document.getElementById('chart-lock-overlay').classList.add('hidden');
+      } else {
+        document.getElementById('leaderboard-lock-overlay').classList.remove('hidden');
+        document.getElementById('chart-lock-overlay').classList.remove('hidden');
+      }
+    }
+
+    // Toggle active splits dropdown
+    function toggleSplitSelector() {
+      const dropdown = document.getElementById('split-dropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
+    // Choose Training split option (PPL, UpperLower, Arnold)
+    function selectSplit(splitKey) {
+      const isPro = canUserAccess('pro');
+      
+      if (splitKey !== 'ppl' && !isPro) {
+        alert("Upgrade to Pro to load Upper/Lower or Arnold splits custom workouts.");
+        switchTab('profile');
+        return;
+      }
+      
+      state.activeSplit = splitKey;
+      state.workoutDay.dayLabel = SPLITS[splitKey].dayLabel;
+      state.workoutDay.exercises = JSON.parse(JSON.stringify(SPLITS[splitKey].exercises)); // Deep clone
+      
+      document.getElementById('active-split-btn-label').textContent = SPLITS[splitKey].name.split(" ")[0] + " Split";
+      document.getElementById('split-dropdown').classList.add('hidden');
+      
+      renderTrainTab();
+      renderHomeTab();
+    }
+
+    // Core Dashboard updates
+    function renderHomeTab() {
+      // Calculate consumed
+      let calories = 0, protein = 0, carbs = 0, fat = 0;
+      Object.keys(state.meals).forEach(mealKey => {
+        state.meals[mealKey].forEach(food => {
+          calories += parseFloat(food.calories) || 0;
+          protein += parseFloat(food.protein) || 0;
+          carbs += parseFloat(food.carbs) || 0;
+          fat += parseFloat(food.fat) || 0;
+        });
+      });
+
+      // Targets checks
+      const targetCals = state.targets.calories;
+      document.getElementById('home-calories-consumed').textContent = calories.toLocaleString();
+      document.getElementById('home-calories-target').textContent = targetCals.toLocaleString();
+      
+      // Ring circle calculations
+      const fraction = Math.min(calories / targetCals, 1);
+      const dashOffset = 502 - (502 * fraction);
+      document.getElementById('calorie-progress-circle').setAttribute('stroke-dashoffset', dashOffset);
+
+      document.getElementById('home-protein-val').textContent = protein;
+      document.getElementById('home-carbs-val').textContent = carbs;
+      document.getElementById('home-fat-val').textContent = fat;
+      document.getElementById('home-water-val').textContent = state.water.toFixed(2);
+      
+      // Workout details
+      document.getElementById('home-workout-name').textContent = state.workoutDay.dayLabel.split(" ")[0];
+      document.getElementById('home-split-title').textContent = SPLITS[state.activeSplit].name;
+      document.getElementById('home-split-desc').textContent = "Today's Target: " + state.workoutDay.dayLabel;
+      
+      // Banner plan status
+      if (state.currentNutritionPlan) {
+        document.getElementById('home-plan-banner').classList.remove('hidden');
+        document.getElementById('home-plan-title').textContent = state.currentNutritionPlan.name;
+      } else {
+        document.getElementById('home-plan-banner').classList.add('hidden');
+      }
+    }
+
+    // Render training exercises
+    function renderTrainTab() {
+      const container = document.getElementById('exercises-container');
+      container.innerHTML = '';
+      
+      document.getElementById('current-workout-day').textContent = state.workoutDay.dayLabel;
+      document.getElementById('workout-ex-count').textContent = state.workoutDay.exercises.length;
+
+      state.workoutDay.exercises.forEach((exercise, exIdx) => {
+        const item = document.createElement('div');
+        item.className = 'bg-cardDark p-5 rounded-3xl border border-borderDark space-y-4';
+        
+        // Exercise header
+        let headerHtml = `
+          <div class="flex justify-between items-center">
+            <div>
+              <h4 class="text-sm font-bold text-white">${exercise.name}</h4>
+              <p class="text-[10px] text-neutral-505 mt-0.5">Primary Target</p>
+            </div>
+            <button onclick="removeExercise(${exIdx})" class="text-neutral-500 hover:text-red-400 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+
+        // Progressive Overload suggestion badge
+        let overloadVal = exercise.lastWeight ? exercise.lastWeight + 2.5 : null;
+        if (overloadVal) {
+          headerHtml += `
+            <div class="flex items-center space-x-2 bg-neutral-900 border border-borderDark px-3 py-1.5 rounded-xl text-[10px]">
+              <span class="text-neutral-400">Target for progressive overload:</span>
+              <span class="text-protein font-bold flex items-center">
+                <i data-lucide="trending-up" class="w-3 h-3 mr-0.5"></i>
+                ${overloadVal} kg (+2.5kg suggestion)
+              </span>
+            </div>
+          `;
+        }
+
+        // Sets logs table
+        let setsRows = '';
+        exercise.sets.forEach((set, setIdx) => {
+          setsRows += `
+            <div class="grid grid-cols-4 gap-3 items-center">
+              <span class="text-[10px] font-bold text-neutral-500">SET ${setIdx + 1}</span>
+              <input type="number" value="${set.reps}" oninput="updateSetData(${exIdx}, ${setIdx}, 'reps', this.value)" placeholder="Reps" class="bg-neutral-900 border border-borderDark py-1.5 px-2 rounded-lg text-center text-xs text-white focus:outline-none">
+              <input type="number" value="${set.weight}" oninput="updateSetData(${exIdx}, ${setIdx}, 'weight', this.value)" placeholder="kg" class="bg-neutral-900 border border-borderDark py-1.5 px-2 rounded-lg text-center text-xs text-white focus:outline-none">
+              <button onclick="removeSetFromExercise(${exIdx}, ${setIdx})" class="text-neutral-500 hover:text-red-400 transition text-right">
+                <i data-lucide="x" class="w-3.5 h-3.5 ml-auto"></i>
+              </button>
+            </div>
+          `;
+        });
+
+        const exHtml = `
+          ${headerHtml}
+          <div class="space-y-2 pt-2 border-t border-borderDark/40">
+            ${setsRows}
+          </div>
+          <button onclick="addSetToExercise(${exIdx})" class="w-full flex items-center justify-center space-x-1 bg-neutral-900 border border-borderDark py-2 rounded-xl text-[10px] text-neutral-400 hover:text-white transition">
+            <i data-lucide="plus" class="w-3 h-3"></i>
+            <span>Add Set</span>
+          </button>
+        `;
+        item.innerHTML = exHtml;
+        container.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    // Workout logger callbacks
+    function updateSetData(exIdx, setIdx, field, val) {
+      state.workoutDay.exercises[exIdx].sets[setIdx][field] = parseFloat(val) || 0;
+    }
+    
+    function addSetToExercise(exIdx) {
+      state.workoutDay.exercises[exIdx].sets.push({ reps: 8, weight: 0 });
+      renderTrainTab();
+    }
+
+    function removeSetFromExercise(exIdx, setIdx) {
+      state.workoutDay.exercises[exIdx].sets.splice(setIdx, 1);
+      renderTrainTab();
+    }
+
+    function removeExercise(exIdx) {
+      state.workoutDay.exercises.splice(exIdx, 1);
+      renderTrainTab();
+    }
+
+    function resetWorkout() {
+      state.workoutDay.exercises = JSON.parse(JSON.stringify(SPLITS[state.activeSplit].exercises));
+      renderTrainTab();
+    }
+
+    function addNewCustomExercise() {
+      const name = prompt("Enter custom exercise name:");
+      if (!name) return;
+      state.workoutDay.exercises.push({
+        name: name,
+        sets: [{ reps: 8, weight: 0 }],
+        lastWeight: 0
+      });
+      renderTrainTab();
+    }
+
+    // Save active training session
+    function saveActiveWorkout() {
+      // Find peak weight logged for each exercise to check for PR updates
+      let prUpdates = [];
+      state.workoutDay.exercises.forEach(ex => {
+        let maxWeight = 0;
+        ex.sets.forEach(set => {
+          if (set.weight > maxWeight) maxWeight = set.weight;
+        });
+        
+        if (maxWeight > 0) {
+          const currentPR = state.prs[ex.name];
+          if (!currentPR || maxWeight > currentPR.weight) {
+            state.prs[ex.name] = { weight: maxWeight, date: new Date().toISOString().split('T')[0] };
+            prUpdates.push(`${ex.name}: ${maxWeight} kg!`);
+          }
+        }
+      });
+
+      if (prUpdates.length > 0) {
+        alert("Session Saved! 🎉 New Personal Records set:\n" + prUpdates.join("\n"));
+      } else {
+        alert("Session saved successfully!");
+      }
+      
+      // Pre-fill next overload reference suggestions based on current lifts logs
+      state.workoutDay.exercises.forEach(ex => {
+        let maxW = 0;
+        ex.sets.forEach(s => { if (s.weight > maxW) maxW = s.weight; });
+        if (maxW > 0) ex.lastWeight = maxW;
+      });
+
+      renderTrainTab();
+      renderHomeTab();
+    }
+
+    // Nutrition Tab updates
+    function renderNutritionTab() {
+      // Render meal plan options
+      const container = document.getElementById('plans-card-container');
+      container.innerHTML = '';
+
+      NUTRITION_PLANS.forEach(plan => {
+        const isActive = state.currentNutritionPlan && state.currentNutritionPlan.id === plan.id;
+        const card = document.createElement('div');
+        card.className = `flex-shrink-0 w-44 bg-cardDark border ${isActive ? 'border-primary' : 'border-borderDark'} p-4 rounded-2xl cursor-pointer hover:border-neutral-500 transition space-y-2`;
+        card.onclick = () => selectNutritionPlan(plan.id);
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-white font-outfit truncate">${plan.name}</span>
+            ${isActive ? '<i data-lucide="check" class="w-3.5 h-3.5 text-primary"></i>' : ''}
+          </div>
+          <p class="text-[10px] text-neutral-400 capitalize">Goal: ${plan.goal}</p>
+          <p class="text-sm font-semibold text-calorie mt-1">${plan.calories} <span class="text-[8px] text-neutral-500">kcal/day</span></p>
+          <div class="flex space-x-1.5 text-[8px] font-medium pt-1 text-center">
+            <div class="bg-protein/10 text-protein px-1 py-0.5 rounded">P: ${plan.protein}g</div>
+            <div class="bg-carbs/10 text-carbs px-1 py-0.5 rounded">C: ${plan.carbs}g</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Render meals sections items
+      Object.keys(state.meals).forEach(mealKey => {
+        const listDiv = document.getElementById(`meal-list-${mealKey.toLowerCase()}`);
+        listDiv.innerHTML = '';
+        const items = state.meals[mealKey];
+
+        if (items.length === 0) {
+          listDiv.innerHTML = `<p class="text-[10px] text-neutral-500 py-1">No foods logged.</p>`;
+          return;
+        }
+
+        items.forEach((item, idx) => {
+          const row = document.createElement('div');
+          row.className = 'flex justify-between items-center bg-neutral-950/40 p-2.5 rounded-xl border border-borderDark/40';
+          row.innerHTML = `
+            <div class="space-y-0.5">
+              <p class="text-xs font-semibold text-white">${item.name}</p>
+              <div class="flex items-center space-x-2 text-[9px] text-neutral-400">
+                <span class="text-calorie">${item.calories} kcal</span>
+                <span>•</span>
+                <span class="text-protein">P: ${item.protein}g</span>
+                <span>•</span>
+                <span class="text-carbs">C: ${item.carbs}g</span>
+              </div>
+            </div>
+            <button onclick="removeFoodItem('${mealKey}', ${idx})" class="text-neutral-500 hover:text-red-400 transition p-1">
+              <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+            </button>
+          `;
+          listDiv.appendChild(row);
+        });
+      });
+
+      lucide.createIcons();
+    }
+
+    // Apply preplanned nutrition plan template
+    function selectNutritionPlan(planId) {
+      if (!canUserAccess('pro')) {
+        alert("Upgrade to Pro to load predefined nutritional target plans.");
+        switchTab('profile');
+        return;
+      }
+      
+      const plan = NUTRITION_PLANS.find(p => p.id === planId);
+      state.currentNutritionPlan = plan;
+      state.targets.calories = plan.calories;
+      state.targets.protein = plan.protein;
+      state.targets.carbs = plan.carbs;
+      state.targets.fat = plan.fat;
+
+      renderNutritionTab();
+      renderHomeTab();
+      alert(`Applied ${plan.name}! Daily calorie and macro target updated.`);
+    }
+
+    // Toggle Cheat Day mode (Elite feature)
+    function toggleCheatDay() {
+      if (!canUserAccess('elite')) {
+        alert("Upgrade to Elite to unlock Cheat Day control configurations.");
+        switchTab('profile');
+        return;
+      }
+
+      state.isCheatDay = !state.isCheatDay;
+      
+      const button = document.getElementById('cheat-day-toggle-btn');
+      const banner = document.getElementById('cheat-day-active-banner');
+      
+      if (state.isCheatDay) {
+        button.className = "w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center transition";
+        button.querySelector('i').className = "w-5 h-5 text-red-400";
+        banner.classList.remove('hidden');
+        
+        // Boost home display targets temporarily
+        state.targets.calories = 5000; 
+      } else {
+        button.className = "w-10 h-10 rounded-xl bg-cardDark border border-borderDark flex items-center justify-center transition";
+        button.querySelector('i').className = "w-5 h-5 text-neutral-400";
+        banner.classList.add('hidden');
+        
+        // Reset defaults
+        if (state.currentNutritionPlan) {
+          state.targets.calories = state.currentNutritionPlan.calories;
+        } else {
+          state.targets.calories = 2000;
+        }
+      }
+
+      renderNutritionTab();
+      renderHomeTab();
+    }
+
+    // Macro customizer modal sliders interaction
+    let tempMacros = { calories: 2000, protein: 150, carbs: 220, fat: 60 };
+
+    function openMacroCustomizer() {
+      if (!canUserAccess('pro')) {
+        alert("Upgrade to Pro to customize individual macro targets.");
+        switchTab('profile');
+        return;
+      }
+
+      tempMacros = { ...state.targets };
+      
+      document.getElementById('range-calories').value = tempMacros.calories;
+      document.getElementById('range-protein').value = tempMacros.protein;
+      document.getElementById('range-carbs').value = tempMacros.carbs;
+      document.getElementById('range-fat').value = tempMacros.fat;
+
+      updateSliderValue('calories', tempMacros.calories);
+      updateSliderValue('protein', tempMacros.protein);
+      updateSliderValue('carbs', tempMacros.carbs);
+      updateSliderValue('fat', tempMacros.fat);
+
+      document.getElementById('macro-customizer-modal').classList.remove('hidden');
+    }
+
+    function closeMacroCustomizer() {
+      document.getElementById('macro-customizer-modal').classList.add('hidden');
+    }
+
+    function updateSliderValue(macro, value) {
+      tempMacros[macro] = parseInt(value);
+      document.getElementById(`slider-val-${macro}`).textContent = (macro === 'calories' ? `${value} kcal` : `${value}g`);
+    }
+
+    function saveCustomMacros() {
+      state.targets = { ...tempMacros };
+      state.currentNutritionPlan = { id: 'custom', name: 'Custom Target' }; // Mark custom
+      closeMacroCustomizer();
+      renderNutritionTab();
+      renderHomeTab();
+      alert("Custom macro targets applied successfully!");
+    }
+
+    // Add water tracker
+    function addWater(amount) {
+      state.water += amount;
+      document.getElementById('home-water-val').textContent = state.water.toFixed(2);
+    }
+
+    // Add Food entry functions
+    let activeMealSelection = 'Breakfast';
+
+    // Show food logs popup modal helper
+    function showAddFoodModal(mealName) {
+      activeMealSelection = mealName;
+      document.getElementById('add-food-meal-name').textContent = mealName;
+      
+      // Clear inputs
+      document.getElementById('food-input-name').value = '';
+      document.getElementById('food-input-calories').value = '';
+      document.getElementById('food-input-protein').value = '';
+      document.getElementById('food-input-carbs').value = '';
+      document.getElementById('food-input-fat').value = '';
+
+      document.getElementById('add-food-modal').classList.remove('hidden');
+    }
+
+    function closeAddFoodModal() {
+      document.getElementById('add-food-modal').classList.add('hidden');
+    }
+
+    function submitFoodEntry() {
+      const name = document.getElementById('food-input-name').value;
+      const calories = parseFloat(document.getElementById('food-input-calories').value) || 0;
+      const protein = parseFloat(document.getElementById('food-input-protein').value) || 0;
+      const carbs = parseFloat(document.getElementById('food-input-carbs').value) || 0;
+      const fat = parseFloat(document.getElementById('food-input-fat').value) || 0;
+
+      if (!name) {
+        alert("Please enter food item name.");
+        return;
+      }
+
+      state.meals[activeMealSelection].push({
+        id: Date.now(),
+        name,
+        calories,
+        protein,
+        carbs,
+        fat
+      });
+
+      closeAddFoodModal();
+      renderNutritionTab();
+      renderHomeTab();
+    }
+
+    function removeFoodItem(mealKey, idx) {
+      state.meals[mealKey].splice(idx, 1);
+      renderNutritionTab();
+      renderHomeTab();
+    }
+
+    // Render progress / metrics screen data
+    function renderProgressTab() {
+      // PRs Grid
+      const prsGrid = document.getElementById('prs-grid-container');
+      prsGrid.innerHTML = '';
+      
+      const emojis = { "Bench Press": "🏋️", "Squat": "🦵", "Deadlift": "⛓️", "Overhead Press": "💪" };
+
+      Object.keys(state.prs).forEach(liftKey => {
+        const pr = state.prs[liftKey];
+        const card = document.createElement('div');
+        card.className = 'bg-cardDark border border-borderDark rounded-2xl p-4 flex flex-col items-center justify-center text-center';
+        card.innerHTML = `
+          <span class="text-xl mb-1">${emojis[liftKey] || '🏋️'}</span>
+          <span class="text-[10px] text-neutral-400 truncate w-full">${liftKey}</span>
+          <span class="text-base font-extrabold text-white font-outfit mt-1">${pr.weight} kg</span>
+          <span class="text-[8px] text-neutral-505 mt-0.5">${pr.date}</span>
+        `;
+        prsGrid.appendChild(card);
+      });
+
+      // Overload Log History Entries
+      const tableBody = document.getElementById('overload-table-body');
+      tableBody.innerHTML = '';
+
+      state.workoutDay.exercises.forEach(ex => {
+        const prev = ex.lastWeight || 0;
+        let current = 0;
+        ex.sets.forEach(s => { if (s.weight > current) current = s.weight; });
+        const delta = current - prev;
+        
+        let deltaClass = 'text-neutral-500';
+        let deltaText = 'No Lift';
+        if (current > 0) {
+          if (delta > 0) {
+            deltaClass = 'text-protein font-bold';
+            deltaText = `+${delta} kg`;
+          } else if (delta === 0) {
+            deltaClass = 'text-carbs font-bold';
+            deltaText = 'Same';
+          } else {
+            deltaClass = 'text-red-400';
+            deltaText = `${delta} kg`;
+          }
+        }
+
+        const row = document.createElement('tr');
+        row.className = 'border-b border-borderDark/40 hover:bg-neutral-950/20';
+        row.innerHTML = `
+          <td class="py-2.5 font-medium text-white">${ex.name}</td>
+          <td class="py-2.5">${prev > 0 ? `${prev} kg` : '-'}</td>
+          <td class="py-2.5 text-white">${current > 0 ? `${current} kg` : 'Not Logged'}</td>
+          <td class="py-2.5 text-right ${deltaClass}">${deltaText}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Leaderboard lists
+      const lbContainer = document.getElementById('leaderboard-users-list');
+      lbContainer.innerHTML = '';
+
+      LEADERBOARD_USERS.forEach((user, idx) => {
+        const isSelf = user.id === 'user_current';
+        const row = document.createElement('div');
+        row.className = `flex justify-between items-center p-3 rounded-2xl border ${isSelf ? 'border-primary bg-primary/5' : 'border-borderDark bg-cardDark'}`;
+        
+        let rankBadge = `<span class="text-xs font-bold text-neutral-400 w-5">#${idx + 1}</span>`;
+        if (idx === 0) rankBadge = `<span class="text-lg w-5">🥇</span>`;
+        if (idx === 1) rankBadge = `<span class="text-lg w-5">🥈</span>`;
+        if (idx === 2) rankBadge = `<span class="text-lg w-5">🥉</span>`;
+
+        row.innerHTML = `
+          <div class="flex items-center space-x-3">
+            ${rankBadge}
+            <div class="w-8 h-8 rounded-full bg-neutral-900 border border-borderDark flex items-center justify-center text-xs font-bold text-white">${user.initial}</div>
+            <div>
+              <p class="text-xs font-bold ${isSelf ? 'text-accent' : 'text-white'}">${user.username}</p>
+              <p class="text-[9px] text-neutral-500">${user.city}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs font-bold text-primary font-outfit">${user.totalScore}</span>
+            <span class="text-[8px] text-neutral-500 block">pts</span>
+          </div>
+        `;
+        lbContainer.appendChild(row);
+      });
+    }
+
+    // Render active profile details
+    function renderProfileTab() {
+      // Active states selection matching current state
+      const tierId = state.user.tier;
+      document.getElementById('tier-card-free').className = `bg-cardDark border ${tierId === 'free' ? 'border-neutral-500' : 'border-borderDark'} rounded-3xl p-5 cursor-pointer hover:border-neutral-500 transition relative overflow-hidden`;
+      document.getElementById('tier-card-pro').className = `bg-cardDark border ${tierId === 'pro' ? 'border-primary' : 'border-borderDark'} rounded-3xl p-5 cursor-pointer hover:border-primary/50 transition relative overflow-hidden`;
+      document.getElementById('tier-card-elite').className = `bg-cardDark border ${tierId === 'elite' ? 'border-amber-500' : 'border-borderDark'} rounded-3xl p-5 cursor-pointer hover:border-amber-500/50 transition relative overflow-hidden`;
+    }
+
+    // App Initialization
+    window.onload = function() {
+      // Seed current dates
+      const options = { weekday: 'long', month: 'long', day: 'numeric' };
+      document.getElementById('current-date-str').textContent = new Date().toLocaleDateString('en-US', options);
+
+      // Load icons
+      lucide.createIcons();
+      
+      // Load restrictions
+      applyGatingRestrictions();
+
+      // Show initial tab
+      switchTab('home');
+    }
+  </script>
+
+</body>
+</html>
