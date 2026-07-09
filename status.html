@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PULSE / Transaction Status</title>
+    <meta name="description" content="Check your PULSE sandbox purchase status.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- SVG Gradients Definitions for Logos -->
+    <svg style="display: none;">
+        <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366f1" />
+                <stop offset="100%" stop-color="#a855f7" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Navigation Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6.5 5h11C18.3 5 19 5.7 19 6.5s-.7 1.5-1.5 1.5h-11C5.7 8 5 7.3 5 6.5S5.7 5 6.5 5zm0 11h11c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5h-11C5.7 19 5 18.3 5 17.5S5.7 16 6.5 16zm-3-5.5h17c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5H3.5C2.7 13.5 2 12.8 2 12s.7-1.5 1.5-1.5z"/>
+                </svg>
+                <span class="gradient-text">PULSE</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Status Card Container -->
+    <main>
+        <div class="status-container">
+            <!-- This card element's classes are dynamically modified: 'status-card success' or 'status-card failed' -->
+            <div class="status-card" id="statusCard">
+                
+                <div class="status-icon-wrapper" id="statusIcon">
+                    <!-- Dynamic SVG inserted via JS -->
+                </div>
+
+                <h2 class="status-title" id="statusTitle">Checking transaction...</h2>
+                <p class="status-message" id="statusMessage">Please wait while we retrieve the transaction logs.</p>
+
+                <!-- Receipt details panel -->
+                <div class="receipt-details" id="receiptDetails" style="display: none;">
+                    <div class="receipt-row">
+                        <span class="receipt-label">Transaction ID</span>
+                        <span class="receipt-value" id="receiptTxnId">TXN-00000000</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="receipt-label">Date & Time</span>
+                        <span class="receipt-value" id="receiptDate">July 9, 2026</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="receipt-label">Payment Method</span>
+                        <span class="receipt-value" id="receiptCard">Visa ending in ••••</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-row" style="font-size: 16px;">
+                        <span class="receipt-label" style="font-weight: 700; color: var(--text-primary);">Total Charged</span>
+                        <span class="receipt-value" id="receiptTotal" style="font-size: 18px; color: var(--accent); font-weight: 800;">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Action Button Block -->
+                <div id="statusActions" style="display: flex; gap: 16px; width: 100%; justify-content: center;">
+                    <!-- Dynamic CTA Buttons -->
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Page Footer -->
+    <footer>
+        <p>&copy; 2026 PULSE Athletics. Secured Sandbox Demonstration. All rights reserved.</p>
+    </footer>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>

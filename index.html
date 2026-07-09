@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PULSE / Elite Gym Merchandise & Supplements</title>
+    <meta name="description" content="Shop elite athletic wear, premium gym merchandise, and high-performance sports supplements at PULSE.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- SVG Gradients Definitions for Logos -->
+    <svg style="display: none;">
+        <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366f1" />
+                <stop offset="100%" stop-color="#a855f7" />
+            </linearGradient>
+            <linearGradient id="productGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#312e81" />
+                <stop offset="100%" stop-color="#581c87" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Navigation Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo" id="logoLink">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6.5 5h11C18.3 5 19 5.7 19 6.5s-.7 1.5-1.5 1.5h-11C5.7 8 5 7.3 5 6.5S5.7 5 6.5 5zm0 11h11c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5h-11C5.7 19 5 18.3 5 17.5S5.7 16 6.5 16zm-3-5.5h17c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5H3.5C2.7 13.5 2 12.8 2 12s.7-1.5 1.5-1.5z"/>
+                </svg>
+                <span class="gradient-text">PULSE</span>
+            </a>
+
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Search gear, supplements..." aria-label="Search products">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+            </div>
+
+            <div class="nav-actions">
+                <button class="cart-toggle-btn" id="cartToggleBtn" aria-label="Toggle Shopping Cart">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+                    </svg>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Section -->
+    <main>
+        <!-- Gym Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <span class="hero-badge">Summer Release</span>
+                <h2>FORGE YOUR <br><span class="gradient-text">ULTIMATE SELF</span></h2>
+                <p>Unlock peak performance with our elite gym merchandise, robust gear, and scientifically advanced supplements. Engineered for those who refuse to settle.</p>
+                <button class="btn" id="heroBtn">Explore Products</button>
+            </div>
+        </section>
+
+        <!-- Category Selectors & Results count -->
+        <section class="filters-section">
+            <div class="categories" id="categoriesContainer">
+                <button class="category-btn active" data-category="all">All Items</button>
+                <button class="category-btn" data-category="supplements">Supplements</button>
+                <button class="category-btn" data-category="apparel">Apparel</button>
+                <button class="category-btn" data-category="accessories">Accessories</button>
+            </div>
+            <div class="results-count">
+                Showing <span id="resultsCount">10</span> products
+            </div>
+        </section>
+
+        <!-- Products Listing Grid -->
+        <section class="products-grid" id="productsGrid" aria-label="Product Catalog">
+            <!-- Dynamic JavaScript Render -->
+        </section>
+    </main>
+
+    <!-- Cart Overlay Drawer -->
+    <div class="cart-overlay" id="cartOverlay">
+        <div class="cart-panel" id="cartPanel">
+            <div class="cart-header">
+                <h3>YOUR <span class="gradient-text">CART</span></h3>
+                <button class="cart-close-btn" id="cartCloseBtn" aria-label="Close Shopping Cart">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="cart-items-container" id="cartItemsContainer">
+                <!-- Dynamic JavaScript Cart Render -->
+            </div>
+
+            <div class="cart-footer">
+                <div class="cart-total-row">
+                    <span>Subtotal:</span>
+                    <span class="cart-total-price" id="cartTotalPrice">$0.00</span>
+                </div>
+                <button class="btn cart-checkout-btn" id="cartCheckoutBtn">PROCEED TO CHECKOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Footer -->
+    <footer>
+        <p>&copy; 2026 PULSE Athletics. Designed for elite athletes. All rights reserved.</p>
+    </footer>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
